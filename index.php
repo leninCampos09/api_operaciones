@@ -5,12 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Prueba API</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script> <!-- Agregar SweetAlert -->
 </head>
 <body class="bg-light">
     <div class="container mt-5">
         <h1 class="text-center">API de Operaciones Matemáticas</h1>
 
-        <!-- Formulario para elegir operación -->
         <div class="mb-3">
             <label for="operacion" class="form-label">Selecciona una operación</label>
             <select id="operacion" class="form-select">
@@ -40,29 +40,36 @@
 
     <script>
     function realizarOperacion() {
-        // Obtener valores del formulario
         const operacion = document.getElementById("operacion").value;
-        const valor1 = document.getElementById("valor1").value;
-        const valor2 = document.getElementById("valor2").value;
+        const valor1 = parseFloat(document.getElementById("valor1").value);
+        const valor2 = parseFloat(document.getElementById("valor2").value);
         const resultadoElemento = document.getElementById("resultado");
 
         // Validar que los valores no estén vacíos
-        if (valor1 === "" || valor2 === "") {
-            resultadoElemento.innerText = "⚠️ Ingresa ambos valores.";
-            resultadoElemento.style.color = "red";
+        if (isNaN(valor1) || isNaN(valor2)) {
+            Swal.fire({
+                icon: "warning",
+                title: "⚠️ Entrada inválida",
+                text: "Por favor, ingresa ambos valores numéricos."
+            });
             return;
         }
 
-        // Crear objeto con los datos
-        const datos = {
-            action: operacion,
-            valor1: parseFloat(valor1),
-            valor2: parseFloat(valor2)
-        };
+        // Validar división por cero
+        if (operacion === "division" && valor2 === 0) {
+            Swal.fire({
+                icon: "error",
+                title: "❌ Error",
+                text: "No se puede dividir por cero. Introduce otro valor.",
+                confirmButtonColor: "#d33"
+            });
+            return;
+        }
 
-        console.log("Datos enviados a la API:", datos); // Debug
+        const datos = { action: operacion, valor1, valor2 };
 
-        // Enviar solicitud a la API
+        console.log("Datos enviados a la API:", datos);
+
         fetch("http://localhost/api_operaciones/api/operaciones_api.php", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -75,26 +82,35 @@
             return response.json();
         })
         .then(data => {
-            console.log("Respuesta de la API:", data); // Debug
+            console.log("Respuesta de la API:", data);
 
             if (data.resultado !== undefined) {
-                resultadoElemento.innerText = "✅ Resultado: " + data.resultado;
-                resultadoElemento.style.color = "green";
+                Swal.fire({
+                    icon: "success",
+                    title: "✅ Resultado",
+                    text: "El resultado es: " + data.resultado
+                });
             } else {
-                resultadoElemento.innerText = "⚠️ Error: " + (data.error || "Respuesta inesperada");
-                resultadoElemento.style.color = "red";
+                Swal.fire({
+                    icon: "error",
+                    title: "⚠️ Error",
+                    text: data.error || "Ocurrió un error inesperado."
+                });
             }
         })
         .catch(error => {
             console.error("Error en la petición:", error);
-            resultadoElemento.innerText = "❌ Error en la conexión con la API.";
-            resultadoElemento.style.color = "red";
+            Swal.fire({
+                icon: "error",
+                title: "❌ Error en la conexión",
+                text: "No se pudo conectar con la API."
+            });
         });
     }
-</script>
-
+    </script>
 
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.6/dist/umd/popper.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.min.js"></script>
 </body>
 </html>
+
